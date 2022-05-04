@@ -22,13 +22,13 @@ STOCK_NODE *binary_tree_build(int start, int end)
     return pnew;
 }
 
-int binary_tree_init(int lines)
+void binary_tree_init(int lines)
 {
     qsort(temp_array, lines, sizeof(STOCK_NODE), cmp);
 
     for (int i = 0; i < lines; i++)
     {
-        fprintf(stdout, "sorted %d %d %d\n", temp_array[i].ID, temp_array[i].left_stock, temp_array[i].price);
+        // fprintf(stdout, "sorted %d %d %d\n", temp_array[i].ID, temp_array[i].left_stock, temp_array[i].price);
     }
 
     tree_head = binary_tree_build(0, lines - 1);
