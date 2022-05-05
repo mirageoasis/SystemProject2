@@ -16,14 +16,15 @@ typedef struct
     rio_t clientrio[FD_SETSIZE];                   /* Set of active read buffers */
 } pool;                                            // line:conc:echoservers:endpool
 
-int lines = 0;    /*파일 라인 수(주식의 개수)*/
-int byte_cnt = 0; // 읽은 바이트수
+int lines = 0; /*파일 라인 수(주식의 개수)*/
 sem_t readMutex;
 
 void echo(int connfd);
 void init_pool(int listenfd, pool *p);
 void add_client(int connfd, pool *p);
 int check_clients(pool *p);
+void command(char *BUF2, char *buf, char *argv[], char *clientBuf);
+void saveTree();
 
 int main(int argc, char **argv)
 {
@@ -31,8 +32,8 @@ int main(int argc, char **argv)
     socklen_t clientlen;
     struct sockaddr_storage clientaddr; /* Enough space for any address */ // line:netp:echoserveri:sockaddrstorage
     static pool pool;
-    char client_hostname[MAXLINE], client_port[MAXLINE];
-    int status = 0; // 주식 현재 상태
+    // char client_hostname[MAXLINE], client_port[MAXLINE];
+    // int status = 0; // 주식 현재 상태
 
     if (argc != 2)
     {
@@ -60,9 +61,9 @@ int main(int argc, char **argv)
     while (1)
     {
         pool.ready_set = pool.read_set;
-        fprintf(stdout, "before select!\n");
+        // fprintf(stdout, "before select!\n");
         pool.nready = Select(pool.maxfd + 1, &pool.ready_set, NULL, NULL, NULL);
-        fprintf(stdout, "after select!\n");
+        // fprintf(stdout, "after select!\n");
         /* If listening descriptor ready, add new client to pool */
         if (FD_ISSET(listenfd, &pool.ready_set))
         { // line:conc:echoservers:listenfdready
@@ -71,9 +72,11 @@ int main(int argc, char **argv)
             add_client(connfd, &pool);                                // line:conc:echoservers:addclient
         }
         /* Echo a text line from each ready connected descriptor */
-        status = check_clients(&pool); // line:conc:echoservers:checkclients
-        fprintf(stdout, "line 74!\n");
+        check_clients(&pool); // line:conc:echoservers:checkclients
+        // fprintf(stdout, "line 74!\n");
+        saveTree(); // 파일에 트리를 밀어넣는다
     }
+
     exit(0);
 }
 
@@ -141,101 +144,10 @@ int check_clients(pool *p)
             p->nready--;
             if ((n = Rio_readlineb(&rio, buf, MAXLINE)) != 0)
             {
-                byte_cnt += n; // line:conc:echoservers:beginecho
-                // printf("Server received %d (%d total) bytes on fd %d\n", n, byte_cnt, connfd);fw190d-9
 
-                // fprintf(stdout, "%s", buf); // buf는 입력이다. 마지막에 개행문자 추가
-                memset(clientBuf, 0, MAXLINE);
-                strcpy(BUF2, buf);
-                BUF2[strlen(BUF2) - 1] = 0;
-                argvFeed(BUF2, argv);
-                // argvTest(argv);
-                if (1)
-                {
-                    if (!strcmp(argv[0], "show"))
-                    {
-                        // lock 걸기
-                        show_binary_tree(tree_head, clientBuf, connfd);
-                    }
-                    else if (!strcmp(argv[0], "buy"))
-                    {
-                        // lock 걸기
-                        fprintf(stdout, "in buy now!\n");
-
-                        if (argv[1] == NULL || argv[2] == NULL)
-                        {
-                            sprintf(clientBuf, "PLEASE PUT THE RIGHT COMMAND!\n");
-                        }
-
-                        int id = atoi(argv[1]);     // 주식 id
-                        int amount = atoi(argv[2]); // 구매할 주식 양
-
-                        STOCK_NODE *target = binary_tree_search(id);
-
-                        if (target == NULL)
-                        {
-                            sprintf(clientBuf, "stock not found!\n");
-                        }
-                        else
-                        {
-                            sem_wait(&target->write);
-                            fprintf(stdout, "before sem_wait!\n");
-
-                            if (amount > target->left_stock)
-                            {
-                                //재고보다 구매량이 많은 경우
-                                sprintf(clientBuf, "Not enough left stock\n");
-                            }
-                            else
-                            {
-                                target->left_stock -= amount;
-                                sprintf(clientBuf, "[buy] " ANSI_COLOR_GREEN "sucess\n" ANSI_COLOR_RESET);
-                            }
-                            fprintf(stdout, "before sem_post!\n");
-                            sem_post(&target->write);
-                        }
-                    }
-                    else if (!strcmp(argv[0], "sell"))
-                    {
-                        // lock 걸기
-                        fprintf(stdout, "in sell now!\n");
-
-                        if (argv[1] == NULL || argv[2] == NULL)
-                        {
-                            sprintf(clientBuf, "PLEASE PUT THE RIGHT COMMAND!\n");
-                        }
-
-                        int id = atoi(argv[1]);     // 주식 id
-                        int amount = atoi(argv[2]); // 구매할 주식 양
-
-                        STOCK_NODE *target = binary_tree_search(id);
-
-                        if (target == NULL)
-                        {
-                            sprintf(clientBuf, "stock not found!\n");
-                        }
-                        else
-                        {
-                            sem_wait(&target->write);
-
-                            target->left_stock += amount;                                               // 고객이 파는 상황이므로 주식의 개수를 늘린다.
-                            sprintf(clientBuf, "[sell] " ANSI_COLOR_GREEN "sucess\n" ANSI_COLOR_RESET); //성공 출력메시지
-
-                            sem_post(&target->write);
-                        }
-                    }
-                    else if (!strcmp(argv[0], "exit"))
-                    {
-                        Close(connfd);                // line:conc:echoservers:closeconnfd
-                        FD_CLR(connfd, &p->read_set); // line:conc:echoservers:beginremove
-                        p->clientfd[i] = -1;          // line:conc:echoservers:endremove
-                    }
-                    else
-                    {
-                        fprintf(stdout, "wrong command!\n");
-                    }
-                }
-                fprintf(stdout, "%s", clientBuf);
+                command(BUF2, buf, argv, clientBuf);
+                // fprintf(stdout, "%s", clientBuf);
+                //  clientBuf[strlen(clientBuf) - 1] = 0;
                 Rio_writen(connfd, clientBuf, strlen(clientBuf)); // line:conc:echoservers:endecho
                 // Rio_writen(connfd, buf, n);                       // line:conc:echoservers:endecho
                 //  Rio_writen 공부하기
@@ -248,9 +160,109 @@ int check_clients(pool *p)
                 p->clientfd[i] = -1;          // line:conc:echoservers:endremove
             }
         }
-        fprintf(stdout, "go for another connected descriptor!\n");
     }
-    fprintf(stdout, "check function!\n");
     return 0;
 }
 /* $end check_clients */
+
+void command(char *BUF2, char *buf, char *argv[], char *clientBuf)
+{
+    int argc = 0;
+
+    memset(clientBuf, 0, MAXLINE); // clinet 에 보낼 buffer 청소하기
+    strcpy(BUF2, buf);             // buf2 에 buf내용 복사하기
+    BUF2[strlen(BUF2) - 1] = 0;    // 개행문자 없에서 argv 로 분리하기 쉽게 만듬
+    argvFeed(BUF2, argv);          // 인자 분리하기
+
+    for (int i = 0; argv[i] != NULL; i++)
+        argc++;
+
+    // fprintf(stdout, "argc is %d\n", argc);
+    if (!strcmp(argv[0], "show"))
+    {
+        // lock 걸기
+        if (argc != 1)
+        {
+            sprintf(clientBuf, "USAGE: %s !\n", argv[0]);
+            return;
+        }
+
+        show_binary_tree(tree_head, clientBuf);
+        strcat(clientBuf + strlen(clientBuf) - 1, "\n"); // 마지막에
+    }
+    else if (!strcmp(argv[0], "buy"))
+    {
+        // lock 걸기
+        // fprintf(stdout, "in buy now!\n");
+
+        if (argc != 3)
+        {
+            sprintf(clientBuf, "USAGE: %s <stock_id> <amount>!\n", argv[0]);
+            return;
+        }
+
+        int id = atoi(argv[1]);     // 주식 id
+        int amount = atoi(argv[2]); // 구매할 주식 양
+
+        STOCK_NODE *target = binary_tree_search(id);
+
+        if (target == NULL)
+        {
+            sprintf(clientBuf, "stock not found!\n");
+        }
+        else
+        {
+            sem_wait(&target->write);
+            // fprintf(stdout, "before sem_wait!\n");
+
+            if (amount > target->left_stock)
+            {
+                //재고보다 구매량이 많은 경우
+                sprintf(clientBuf, "Not enough left stock\n");
+            }
+            else
+            {
+                target->left_stock -= amount;
+                sprintf(clientBuf, "[buy] " ANSI_COLOR_GREEN "sucess" ANSI_COLOR_RESET "\n");
+            }
+            // fprintf(stdout, "before sem_post!\n");
+            sem_post(&target->write);
+        }
+    }
+    else if (!strcmp(argv[0], "sell"))
+    {
+        // lock 걸기
+        fprintf(stdout, "in sell now!\n");
+
+        if (argc != 3)
+        {
+            sprintf(clientBuf, "USAGE: %s <stock_id> <amount>!\n", argv[0]);
+            return;
+        }
+
+        int id = atoi(argv[1]);     // 주식 id
+        int amount = atoi(argv[2]); // 구매할 주식 양
+
+        STOCK_NODE *target = binary_tree_search(id);
+
+        if (target == NULL)
+        {
+            sprintf(clientBuf, "stock not found!\n");
+        }
+        else
+        {
+            sem_wait(&target->write);
+
+            target->left_stock += amount;                                                  // 고객이 파는 상황이므로 주식의 개수를 늘린다.
+            sprintf(clientBuf, "[sell] " ANSI_COLOR_GREEN "sucess" ANSI_COLOR_RESET "\n"); //성공 출력메시지
+
+            sem_post(&target->write);
+        }
+    }
+    else
+    {
+        fprintf(stdout, "command does not exists!\n");
+        sprintf(clientBuf, "wrong command!\n");
+        return;
+    }
+}

@@ -64,7 +64,7 @@ STOCK_NODE *binary_tree_search(int id)
     return ret;
 }
 
-void show_binary_tree(STOCK_NODE *cur, char *clientBuf, int connfd)
+void show_binary_tree(STOCK_NODE *cur, char *clientBuf)
 {
     // 접근 금지
     // wait 하고 post
@@ -73,19 +73,18 @@ void show_binary_tree(STOCK_NODE *cur, char *clientBuf, int connfd)
     // clientbuf가 업뎃이 안됨 ㅋㅋㅋ
     // queue 쓸까?
     // strlen 써서 거기에 strcat 하면 문자열 배열 완성?
-    // 여기서 readcnt 관련해서 고민해야하나?
     sem_wait(&cur->mutex);
     (cur->readcnt)++;
     if (cur->readcnt == 1)
         sem_wait(&cur->write);
     sem_post(&cur->mutex);
 
-    show_binary_tree(cur->left, clientBuf, connfd);
+    show_binary_tree(cur->left, clientBuf);
     // sprintf(clientBuf, "show binary tree: ");
-    sprintf(clientBuf + strlen(clientBuf), "%d %d %d\n", cur->ID, cur->left_stock, cur->price);
+    sprintf(clientBuf + strlen(clientBuf), "%d %d %d ", cur->ID, cur->left_stock, cur->price); // 구현에 따라 다르다
     // fprintf(stdout, "%s\n", clientBuf);
     //  Rio_writen(connfd, clientBuf, strlen(clientBuf)); // line:conc:echoservers:endecho
-    show_binary_tree(cur->right, clientBuf, connfd);
+    show_binary_tree(cur->right, clientBuf);
 
     //접근 금지
 

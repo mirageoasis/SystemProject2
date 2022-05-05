@@ -1,13 +1,15 @@
 #include "csapp.h"
 #include <time.h>
 
-#define MAX_CLIENT 100
-#define ORDER_PER_CLIENT 4
-#define STOCK_NUM 10
-#define BUY_SELL_MAX 10
+#define MAX_CLIENT 100		// max number of client
+#define ORDER_PER_CLIENT 10 // requests per client
+#define STOCK_NUM 5			// number of stocks in file
+#define BUY_SELL_MAX 5		// max stock number per request
 
 int main(int argc, char **argv)
 {
+	clock_t start, end;
+	start = clock();
 	pid_t pids[MAX_CLIENT];
 	int runprocess = 0, status, i;
 
@@ -44,11 +46,11 @@ int main(int argc, char **argv)
 
 			for (i = 0; i < ORDER_PER_CLIENT; i++)
 			{
-				int option = rand() % 2 + 1;
-				fprintf(stdout, "child %ld : ", (long)getpid());
+				int option = rand() % 3;
+
 				if (option == 0)
 				{ // show
-				  // strcpy(buf, "show\n"); //잠시 봉인
+					strcpy(buf, "show\n");
 				}
 				else if (option == 1)
 				{ // buy
@@ -78,14 +80,27 @@ int main(int argc, char **argv)
 				}
 				// strcpy(buf, "buy 1 2\n");
 
-				fprintf(stdout, "%s", buf);
 				Rio_writen(clientfd, buf, strlen(buf));
 				Rio_readlineb(&rio, buf, MAXLINE);
-				Fputs(buf, stdout);
+				if (option == 0)
+				{
+					char *cptr = strtok(buf, " ");
+					int rem = 1;
+					while (cptr != NULL)
+					{
+						if (!strcmp(cptr, "\n"))
+							break;
+						printf("%s ", cptr);
+						if (rem % 3 == 0)
+							printf("\n");
+						cptr = strtok(NULL, " ");
+						rem++;
+					}
+				}
+				else
+					Fputs(buf, stdout);
 
-				int rand_count = 1000000 * (rand() % 3); // 내가 임의로 추가한 부분
-
-				usleep(rand_count);
+				usleep(1000000);
 			}
 
 			Close(clientfd);
@@ -115,6 +130,7 @@ int main(int argc, char **argv)
 
 	Close(clientfd); //line:netp:echoclient:close
 	exit(0);*/
-
+	end = clock() - start;
+	printf("elapsed time : %f ms\n", (double)end / CLOCKS_PER_SEC);
 	return 0;
 }
