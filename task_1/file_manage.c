@@ -17,7 +17,7 @@ void read_file()
     {
         lines++;
     }
-    fprintf(stdout, "total line is! %d\n", lines);
+    // fprintf(stdout, "total line is! %d\n", lines);
 
     fclose(fp);
 

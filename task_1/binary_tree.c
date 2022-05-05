@@ -12,12 +12,17 @@ STOCK_NODE *binary_tree_build(int start, int end)
     STOCK_NODE *pnew = (STOCK_NODE *)malloc(sizeof(STOCK_NODE));
 
     int mid = (start + end) / 2;
-    fprintf(stdout, "the id is %d!\n", temp_array[mid].ID);
-    pnew->ID = temp_array[mid].ID;
-    pnew->left_stock = temp_array[mid].left_stock;
-    pnew->price = temp_array[mid].price;
-    pnew->left = binary_tree_build(start, mid - 1);
-    pnew->right = binary_tree_build(mid + 1, end);
+    // fprintf(stdout, "the id is %d!\n", temp_array[mid].ID);
+    pnew->ID = temp_array[mid].ID;                 //주식 id
+    pnew->left_stock = temp_array[mid].left_stock; // 재고
+    pnew->price = temp_array[mid].price;           // 가격
+    pnew->readcnt = 0;                             // reader 는 0명
+
+    sem_init(&pnew->mutex, 0, 1); // 세마포어 1로 초기화(자신이 들어가고 lock이 걸려야 하므로 0 이면 signal 의 개념이다)
+    sem_init(&pnew->write, 0, 1); // 세마포어 1로 초기화(자신이 들어가고 lock이 걸려야 하므로 0 이면 signal 의 개념이다)
+
+    pnew->left = binary_tree_build(start, mid - 1); // 왼쪽
+    pnew->right = binary_tree_build(mid + 1, end);  // 오른쪽
 
     return pnew;
 }
@@ -32,5 +37,58 @@ void binary_tree_init(int lines)
     }
 
     tree_head = binary_tree_build(0, lines - 1);
-    free(temp_array);
+    free(temp_array); // 코드 스타일 물어보기 free 를 여기서 해주는게 맞는건가?
+}
+
+STOCK_NODE *binary_tree_search(int id)
+{
+    STOCK_NODE *ret = tree_head;
+
+    while (ret)
+    {
+        if (id > ret->ID)
+        {
+            ret = ret->right;
+        }
+        else if (id < ret->ID)
+        {
+            ret = ret->left;
+        }
+        else
+        {
+            // fprintf(stdout, "%d found!\n", ret->ID);
+            break; // 같은 경우는 break한다
+        }
+    }
+
+    return ret;
+}
+
+void show_binary_tree(STOCK_NODE *cur, char *clientBuf, int connfd)
+{
+    // 접근 금지
+    // wait 하고 post
+    if (!cur) // 없으면 return
+        return;
+    // clientbuf가 업뎃이 안됨 ㅋㅋㅋ
+    sem_wait(&cur->mutex);
+    (cur->readcnt)++;
+    if (cur->readcnt == 1)
+        sem_wait(&cur->write);
+    sem_post(&cur->mutex);
+
+    show_binary_tree(cur->left, clientBuf, connfd);
+    sprintf(clientBuf, "show binary tree: ");
+    sprintf(clientBuf, "%d %d %d\n", cur->ID, cur->left_stock, cur->price);
+    Rio_writen(connfd, clientBuf, 1000); // line:conc:echoservers:endecho
+    show_binary_tree(cur->right, clientBuf, connfd);
+
+    //접근 금지
+
+    sem_wait(&cur->mutex);
+    (cur->readcnt)--;
+    if (cur->readcnt == 0)
+        sem_post(&cur->write);
+
+    sem_post(&cur->mutex);
 }
