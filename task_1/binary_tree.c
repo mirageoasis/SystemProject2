@@ -71,6 +71,9 @@ void show_binary_tree(STOCK_NODE *cur, char *clientBuf, int connfd)
     if (!cur) // 없으면 return
         return;
     // clientbuf가 업뎃이 안됨 ㅋㅋㅋ
+    // queue 쓸까?
+    // strlen 써서 거기에 strcat 하면 문자열 배열 완성?
+    // 여기서 readcnt 관련해서 고민해야하나?
     sem_wait(&cur->mutex);
     (cur->readcnt)++;
     if (cur->readcnt == 1)
@@ -78,9 +81,10 @@ void show_binary_tree(STOCK_NODE *cur, char *clientBuf, int connfd)
     sem_post(&cur->mutex);
 
     show_binary_tree(cur->left, clientBuf, connfd);
-    sprintf(clientBuf, "show binary tree: ");
-    sprintf(clientBuf, "%d %d %d\n", cur->ID, cur->left_stock, cur->price);
-    Rio_writen(connfd, clientBuf, 1000); // line:conc:echoservers:endecho
+    // sprintf(clientBuf, "show binary tree: ");
+    sprintf(clientBuf + strlen(clientBuf), "%d %d %d\n", cur->ID, cur->left_stock, cur->price);
+    // fprintf(stdout, "%s\n", clientBuf);
+    //  Rio_writen(connfd, clientBuf, strlen(clientBuf)); // line:conc:echoservers:endecho
     show_binary_tree(cur->right, clientBuf, connfd);
 
     //접근 금지

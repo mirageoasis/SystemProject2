@@ -145,93 +145,100 @@ int check_clients(pool *p)
                 // printf("Server received %d (%d total) bytes on fd %d\n", n, byte_cnt, connfd);fw190d-9
 
                 // fprintf(stdout, "%s", buf); // buf는 입력이다. 마지막에 개행문자 추가
+                memset(clientBuf, 0, MAXLINE);
                 strcpy(BUF2, buf);
                 BUF2[strlen(BUF2) - 1] = 0;
                 argvFeed(BUF2, argv);
                 // argvTest(argv);
-
-                if (!strcmp(argv[0], "show"))
+                if (1)
                 {
-                    // lock 걸기
-                    show_binary_tree(tree_head, clientBuf, connfd);
-                }
-                else if (!strcmp(argv[0], "buy"))
-                {
-                    // lock 걸기
-                    fprintf(stdout, "in buy now!\n");
-
-                    if (argv[1] == NULL || argv[2] == NULL)
+                    if (!strcmp(argv[0], "show"))
                     {
-                        sprintf(clientBuf, "PLEASE PUT THE RIGHT COMMAND!\n");
+                        // lock 걸기
+                        show_binary_tree(tree_head, clientBuf, connfd);
                     }
-
-                    int id = atoi(argv[1]);     // 주식 id
-                    int amount = atoi(argv[2]); // 구매할 주식 양
-
-                    STOCK_NODE *target = binary_tree_search(id);
-
-                    if (target == NULL)
+                    else if (!strcmp(argv[0], "buy"))
                     {
-                        sprintf(clientBuf, "stock not found!\n");
-                    }
-                    else
-                    {
-                        sem_wait(&target->write);
+                        // lock 걸기
+                        fprintf(stdout, "in buy now!\n");
 
-                        if (amount > target->left_stock)
+                        if (argv[1] == NULL || argv[2] == NULL)
                         {
-                            //재고보다 구매량이 많은 경우
-                            sprintf(clientBuf, "Not enough left stock\n");
+                            sprintf(clientBuf, "PLEASE PUT THE RIGHT COMMAND!\n");
+                        }
+
+                        int id = atoi(argv[1]);     // 주식 id
+                        int amount = atoi(argv[2]); // 구매할 주식 양
+
+                        STOCK_NODE *target = binary_tree_search(id);
+
+                        if (target == NULL)
+                        {
+                            sprintf(clientBuf, "stock not found!\n");
                         }
                         else
                         {
-                            target->left_stock -= amount;
-                            sprintf(clientBuf, "[buy] " ANSI_COLOR_GREEN "sucess\n" ANSI_COLOR_RESET);
+                            sem_wait(&target->write);
+                            fprintf(stdout, "before sem_wait!\n");
+
+                            if (amount > target->left_stock)
+                            {
+                                //재고보다 구매량이 많은 경우
+                                sprintf(clientBuf, "Not enough left stock\n");
+                            }
+                            else
+                            {
+                                target->left_stock -= amount;
+                                sprintf(clientBuf, "[buy] " ANSI_COLOR_GREEN "sucess\n" ANSI_COLOR_RESET);
+                            }
+                            fprintf(stdout, "before sem_post!\n");
+                            sem_post(&target->write);
+                        }
+                    }
+                    else if (!strcmp(argv[0], "sell"))
+                    {
+                        // lock 걸기
+                        fprintf(stdout, "in sell now!\n");
+
+                        if (argv[1] == NULL || argv[2] == NULL)
+                        {
+                            sprintf(clientBuf, "PLEASE PUT THE RIGHT COMMAND!\n");
                         }
 
-                        sem_post(&target->write);
+                        int id = atoi(argv[1]);     // 주식 id
+                        int amount = atoi(argv[2]); // 구매할 주식 양
+
+                        STOCK_NODE *target = binary_tree_search(id);
+
+                        if (target == NULL)
+                        {
+                            sprintf(clientBuf, "stock not found!\n");
+                        }
+                        else
+                        {
+                            sem_wait(&target->write);
+
+                            target->left_stock += amount;                                               // 고객이 파는 상황이므로 주식의 개수를 늘린다.
+                            sprintf(clientBuf, "[sell] " ANSI_COLOR_GREEN "sucess\n" ANSI_COLOR_RESET); //성공 출력메시지
+
+                            sem_post(&target->write);
+                        }
                     }
-                }
-                else if (!strcmp(argv[0], "sell"))
-                {
-                    // lock 걸기
-                    fprintf(stdout, "in sell now!\n");
-
-                    if (argv[1] == NULL || argv[2] == NULL)
+                    else if (!strcmp(argv[0], "exit"))
                     {
-                        sprintf(clientBuf, "PLEASE PUT THE RIGHT COMMAND!\n");
-                    }
-
-                    int id = atoi(argv[1]);     // 주식 id
-                    int amount = atoi(argv[2]); // 구매할 주식 양
-
-                    STOCK_NODE *target = binary_tree_search(id);
-
-                    if (target == NULL)
-                    {
-                        sprintf(clientBuf, "stock not found!\n");
+                        Close(connfd);                // line:conc:echoservers:closeconnfd
+                        FD_CLR(connfd, &p->read_set); // line:conc:echoservers:beginremove
+                        p->clientfd[i] = -1;          // line:conc:echoservers:endremove
                     }
                     else
                     {
-                        sem_wait(&target->write);
-
-                        target->left_stock += amount;                                               // 고객이 파는 상황이므로 주식의 개수를 늘린다.
-                        sprintf(clientBuf, "[sell] " ANSI_COLOR_GREEN "sucess\n" ANSI_COLOR_RESET); //성공 출력메시지
-
-                        sem_post(&target->write);
+                        fprintf(stdout, "wrong command!\n");
                     }
                 }
-                else if (!strcmp(argv[0], "exit"))
-                {
-                    Close(connfd);                // line:conc:echoservers:closeconnfd
-                    FD_CLR(connfd, &p->read_set); // line:conc:echoservers:beginremove
-                    p->clientfd[i] = -1;          // line:conc:echoservers:endremove
-                }
-                else
-                {
-                    fprintf(stdout, "wrong command!\n");
-                }
-                Rio_writen(connfd, clientBuf, MAXLINE); // line:conc:echoservers:endecho
+                fprintf(stdout, "%s", clientBuf);
+                Rio_writen(connfd, clientBuf, strlen(clientBuf)); // line:conc:echoservers:endecho
+                // Rio_writen(connfd, buf, n);                       // line:conc:echoservers:endecho
+                //  Rio_writen 공부하기
                 /* EOF detected, remove descriptor from pool */
             }
             else

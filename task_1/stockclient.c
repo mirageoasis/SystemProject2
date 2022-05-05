@@ -23,14 +23,15 @@ int main(int argc, char **argv)
 
     while (Fgets(buf, MAXLINE, stdin) != NULL)
     {
-        // fprintf(stdout, "start loop!\n");
+        fprintf(stdout, "start loop!\n");
         Rio_writen(clientfd, buf, strlen(buf));
-        // fprintf(stdout, "start reading loop!\n");
+        fprintf(stdout, "start reading loop!\n");
+        // readlinb 에서 show를 하면 안넘어온다.
         Rio_readlineb(&rio, buf, MAXLINE);
         Fputs(buf, stdout);
         fprintf(stdout, "in fgets loop!\n");
     }
-    fprintf(stdout, "out fgets loop!\n");
+    // fprintf(stdout, "out fgets loop!\n");
     Close(clientfd); // line:netp:echoclient:close
     exit(0);
 }

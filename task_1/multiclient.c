@@ -44,11 +44,11 @@ int main(int argc, char **argv)
 
 			for (i = 0; i < ORDER_PER_CLIENT; i++)
 			{
-				int option = rand() % 3;
+				int option = rand() % 2 + 1;
 				fprintf(stdout, "child %ld : ", (long)getpid());
 				if (option == 0)
 				{ // show
-					strcpy(buf, "show\n");
+				  // strcpy(buf, "show\n"); //잠시 봉인
 				}
 				else if (option == 1)
 				{ // buy
@@ -78,6 +78,7 @@ int main(int argc, char **argv)
 				}
 				// strcpy(buf, "buy 1 2\n");
 
+				fprintf(stdout, "%s", buf);
 				Rio_writen(clientfd, buf, strlen(buf));
 				Rio_readlineb(&rio, buf, MAXLINE);
 				Fputs(buf, stdout);
