@@ -1,5 +1,8 @@
 #include "binary_tree.h"
 
+int front = 0; // 큐 앞
+int rear = 0;  // 큐 뒤
+
 int cmp(const void *first, const void *second)
 {
     return ((STOCK_NODE *)first)->ID > ((STOCK_NODE *)second)->ID;
@@ -70,9 +73,6 @@ void show_binary_tree(STOCK_NODE *cur, char *clientBuf)
     // wait 하고 post
     if (!cur) // 없으면 return
         return;
-    // clientbuf가 업뎃이 안됨 ㅋㅋㅋ
-    // queue 쓸까?
-    // strlen 써서 거기에 strcat 하면 문자열 배열 완성?
     sem_wait(&cur->mutex);
     (cur->readcnt)++;
     if (cur->readcnt == 1)
@@ -83,7 +83,6 @@ void show_binary_tree(STOCK_NODE *cur, char *clientBuf)
     // sprintf(clientBuf, "show binary tree: ");
     sprintf(clientBuf + strlen(clientBuf), "%d %d %d ", cur->ID, cur->left_stock, cur->price); // 구현에 따라 다르다
     // fprintf(stdout, "%s\n", clientBuf);
-    //  Rio_writen(connfd, clientBuf, strlen(clientBuf)); // line:conc:echoservers:endecho
     show_binary_tree(cur->right, clientBuf);
 
     //접근 금지
@@ -94,4 +93,10 @@ void show_binary_tree(STOCK_NODE *cur, char *clientBuf)
         sem_post(&cur->write);
 
     sem_post(&cur->mutex);
+}
+
+void save_binary_tree(STOCK_NODE *cur, char *filename)
+{
+    // 일단 여기서 순회하면서 write function 으로 사용한다.
+    // open function 활용하기
 }

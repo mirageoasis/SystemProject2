@@ -17,6 +17,7 @@ typedef struct
 } pool;                                            // line:conc:echoservers:endpool
 
 int lines = 0; /*파일 라인 수(주식의 개수)*/
+int loop = 1;  /*루프 지속할지 말지 결정하는 변수*/
 sem_t readMutex;
 
 void echo(int connfd);
@@ -24,6 +25,7 @@ void init_pool(int listenfd, pool *p);
 void add_client(int connfd, pool *p);
 int check_clients(pool *p);
 void command(char *BUF2, char *buf, char *argv[], char *clientBuf);
+void sigint_handler();
 void saveTree();
 
 int main(int argc, char **argv)
@@ -32,6 +34,7 @@ int main(int argc, char **argv)
     socklen_t clientlen;
     struct sockaddr_storage clientaddr; /* Enough space for any address */ // line:netp:echoserveri:sockaddrstorage
     static pool pool;
+    sigset_t signal_pool;
     // char client_hostname[MAXLINE], client_port[MAXLINE];
     // int status = 0; // 주식 현재 상태
 
@@ -53,17 +56,19 @@ int main(int argc, char **argv)
     // fprintf(stdout, "head %d %d %d\n", tree_head->ID, tree_head->left_stock, tree_head->price);
 
     // levelOrder(tree_head, lines); // test code
-    //  fprintf(stdout, "levleorder fin!\n");
-    //   exit(0);
 
     listenfd = Open_listenfd(argv[1]);
     init_pool(listenfd, &pool); // line:conc:echoservers:initpool
-    while (1)
+    Signal(SIGINT, sigint_handler);
+    Sigemptyset(&signal_pool);
+    Sigaddset(&signal_pool, SIGINT);
+
+    while (loop)
     {
         pool.ready_set = pool.read_set;
-        // fprintf(stdout, "before select!\n");
+        fprintf(stdout, "before select!\n");
         pool.nready = Select(pool.maxfd + 1, &pool.ready_set, NULL, NULL, NULL);
-        // fprintf(stdout, "after select!\n");
+        fprintf(stdout, "after select!\n");
         /* If listening descriptor ready, add new client to pool */
         if (FD_ISSET(listenfd, &pool.ready_set))
         { // line:conc:echoservers:listenfdready
@@ -74,8 +79,9 @@ int main(int argc, char **argv)
         /* Echo a text line from each ready connected descriptor */
         check_clients(&pool); // line:conc:echoservers:checkclients
         // fprintf(stdout, "line 74!\n");
-        saveTree(); // 파일에 트리를 밀어넣는다
     }
+
+    // saveTree(); // 파일에 트리를 밀어넣는다
 
     exit(0);
 }
@@ -232,7 +238,7 @@ void command(char *BUF2, char *buf, char *argv[], char *clientBuf)
     else if (!strcmp(argv[0], "sell"))
     {
         // lock 걸기
-        fprintf(stdout, "in sell now!\n");
+        // fprintf(stdout, "in sell now!\n");
 
         if (argc != 3)
         {
@@ -265,4 +271,15 @@ void command(char *BUF2, char *buf, char *argv[], char *clientBuf)
         sprintf(clientBuf, "wrong command!\n");
         return;
     }
+}
+
+void sigint_handler()
+{
+    // Sio_puts("in sigint\n");
+    loop = 0;
+    // Sio_puts("in sigint\n");
+    // levelOrder_write_file();
+    // 트리정리어캐 할꺼?
+
+    exit(1);
 }
