@@ -37,3 +37,30 @@ void read_file()
 
     fclose(fp);
 }
+
+void save_binary_tree(STOCK_NODE *cur)
+{
+    FILE *fp;
+    // 일단 여기서 순회하면서 write function 으로 사용한다.
+    // open function 활용하기
+    if ((fp = fopen("stock.txt", "w")) == NULL)
+    {
+        fprintf(stdout, "file does not exists!\n");
+        exit(0);
+    }
+
+    recursive_write(cur, fp);
+
+    fclose(fp);
+}
+
+void recursive_write(STOCK_NODE *cur, FILE *fp)
+{
+    if (!cur) // 없으면 return
+        return;
+    recursive_write(cur->left, fp);
+    // sprintf(clientBuf, "show binary tree: ");
+    fprintf(fp, "%d %d %d\n", cur->ID, cur->left_stock, cur->price); // 구현에 따라 다르다
+    // fprintf(stdout, "%s\n", clientBuf);
+    recursive_write(cur->right, fp);
+}

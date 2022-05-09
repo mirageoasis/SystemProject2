@@ -79,7 +79,8 @@ int main(int argc, char **argv)
 					strcat(buf, "\n");
 				}
 				// strcpy(buf, "buy 1 2\n");
-
+				fprintf(stdout, "pid %ld : ", (long)getpid());
+				fprintf(stdout, "%s", buf);
 				Rio_writen(clientfd, buf, strlen(buf));
 				Rio_readlineb(&rio, buf, MAXLINE);
 				if (option == 0)

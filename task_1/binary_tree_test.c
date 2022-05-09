@@ -1,18 +1,18 @@
 #include "binary_tree_test.h"
 
-int front = 0; // 큐 앞
-int rear = 0;  // 큐 뒤
+int front_test = 0; // 큐 앞
+int rear_test = 0;  // 큐 뒤
 
 void Enqueue_test(STOCK_NODE *ptr, STOCK_NODE **Queue)
 {
     // fprintf(stdout, "enqueue rear %d!\n", rear + 1);
-    Queue[++rear] = ptr;
+    Queue[++rear_test] = ptr;
 }
 
 STOCK_NODE *Dequeue_test(STOCK_NODE **Queue)
 {
     // fprintf(stdout, "dequeue! front %d\n", front + 1);
-    return Queue[++front];
+    return Queue[++front_test];
 }
 
 void levelOrder_test(STOCK_NODE *ptr, int lines)

@@ -1,5 +1,5 @@
 /*
- * echoserveri.c - An iterative echo server
+ * echoservere.c - An iterative echo server
  */
 /* $begin echoserverimain */
 
@@ -26,7 +26,6 @@ void add_client(int connfd, pool *p);
 int check_clients(pool *p);
 void command(char *BUF2, char *buf, char *argv[], char *clientBuf);
 void sigint_handler();
-void saveTree();
 
 int main(int argc, char **argv)
 {
@@ -66,9 +65,9 @@ int main(int argc, char **argv)
     while (loop)
     {
         pool.ready_set = pool.read_set;
-        fprintf(stdout, "before select!\n");
+        // fprintf(stdout, "before select!\n");
         pool.nready = Select(pool.maxfd + 1, &pool.ready_set, NULL, NULL, NULL);
-        fprintf(stdout, "after select!\n");
+        // fprintf(stdout, "after select!\n");
         /* If listening descriptor ready, add new client to pool */
         if (FD_ISSET(listenfd, &pool.ready_set))
         { // line:conc:echoservers:listenfdready
@@ -79,9 +78,8 @@ int main(int argc, char **argv)
         /* Echo a text line from each ready connected descriptor */
         check_clients(&pool); // line:conc:echoservers:checkclients
         // fprintf(stdout, "line 74!\n");
+        save_binary_tree(tree_head); // 파일에 트리를 밀어넣는다
     }
-
-    // saveTree(); // 파일에 트리를 밀어넣는다
 
     exit(0);
 }
@@ -153,7 +151,8 @@ int check_clients(pool *p)
 
                 command(BUF2, buf, argv, clientBuf);
                 // fprintf(stdout, "%s", clientBuf);
-                //  clientBuf[strlen(clientBuf) - 1] = 0;
+                // clientBuf[strlen(clientBuf) - 1] = 0;
+                // fprintf(stdout, "%s", clientBuf);
                 Rio_writen(connfd, clientBuf, strlen(clientBuf)); // line:conc:echoservers:endecho
                 // Rio_writen(connfd, buf, n);                       // line:conc:echoservers:endecho
                 //  Rio_writen 공부하기
@@ -194,7 +193,7 @@ void command(char *BUF2, char *buf, char *argv[], char *clientBuf)
         }
 
         show_binary_tree(tree_head, clientBuf);
-        strcat(clientBuf + strlen(clientBuf) - 1, "\n"); // 마지막에
+        strcat(clientBuf + (strlen(clientBuf) - 1), "\n"); // 마지막에
     }
     else if (!strcmp(argv[0], "buy"))
     {

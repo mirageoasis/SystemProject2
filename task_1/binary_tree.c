@@ -94,9 +94,3 @@ void show_binary_tree(STOCK_NODE *cur, char *clientBuf)
 
     sem_post(&cur->mutex);
 }
-
-void save_binary_tree(STOCK_NODE *cur, char *filename)
-{
-    // 일단 여기서 순회하면서 write function 으로 사용한다.
-    // open function 활용하기
-}

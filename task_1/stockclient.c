@@ -28,16 +28,18 @@ int main(int argc, char **argv)
             break;
         else if (!strcmp(buf, "show\n"))
             flag = 1;
+
         Rio_writen(clientfd, buf, strlen(buf));
         Rio_readlineb(&rio, buf, MAXLINE);
         if (flag == 1)
         {
+            // fprintf(stdout, "%s", buf);
             char *cptr = strtok(buf, " ");
             int rem = 1;
             while (cptr != NULL)
             {
-                // if (!strcmp(cptr, "\n"))
-                //     break;
+                if (!strcmp(cptr, "\n"))
+                    break;
                 printf("%s ", cptr);
                 if (rem % 3 == 0)
                     printf("\n");
