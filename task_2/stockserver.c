@@ -95,7 +95,6 @@ void command(char *BUF2, char *buf, char *argv[], char *clientBuf)
         }
 
         show_binary_tree(tree_head, clientBuf);
-        strcat(clientBuf + (strlen(clientBuf) - 1), "\n"); // 마지막에
     }
     else if (!strcmp(argv[0], "buy"))
     {
@@ -204,7 +203,7 @@ void *thread(void *vargp)
     {
         // printf("server received %d bytes\n", n);
         command(BUF2, buf, argv, clientBuf);
-        Rio_writen(connfd, clientBuf, strlen(clientBuf));
+        Rio_writen(connfd, clientBuf, MAXLINE);
     }
     save_binary_tree(tree_head);
     Close(connfd);

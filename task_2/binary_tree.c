@@ -81,7 +81,7 @@ void show_binary_tree(STOCK_NODE *cur, char *clientBuf)
 
     show_binary_tree(cur->left, clientBuf);
     // sprintf(clientBuf, "show binary tree: ");
-    sprintf(clientBuf + strlen(clientBuf), "%d %d %d ", cur->ID, cur->left_stock, cur->price); // 구현에 따라 다르다
+    sprintf(clientBuf + strlen(clientBuf), "%d %d %d\n", cur->ID, cur->left_stock, cur->price); // 구현에 따라 다르다
     // fprintf(stdout, "%s\n", clientBuf);
     show_binary_tree(cur->right, clientBuf);
 

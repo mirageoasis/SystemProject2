@@ -1,15 +1,13 @@
 #include "csapp.h"
 #include <time.h>
 
-#define MAX_CLIENT 100		// max number of client
-#define ORDER_PER_CLIENT 10 // requests per client
-#define STOCK_NUM 5			// number of stocks in file
-#define BUY_SELL_MAX 5		// max stock number per request
+#define MAX_CLIENT 100
+#define ORDER_PER_CLIENT 10
+#define STOCK_NUM 10
+#define BUY_SELL_MAX 10
 
 int main(int argc, char **argv)
 {
-	clock_t start, end;
-	start = clock();
 	pid_t pids[MAX_CLIENT];
 	int runprocess = 0, status, i;
 
@@ -79,27 +77,11 @@ int main(int argc, char **argv)
 					strcat(buf, "\n");
 				}
 				// strcpy(buf, "buy 1 2\n");
-				fprintf(stdout, "pid %ld : ", (long)getpid());
-				fprintf(stdout, "%s", buf);
+				fprintf(stdout, "id %d command: %s", getpid(), buf);
 				Rio_writen(clientfd, buf, strlen(buf));
-				Rio_readlineb(&rio, buf, MAXLINE);
-				if (option == 0)
-				{
-					char *cptr = strtok(buf, " ");
-					int rem = 1;
-					while (cptr != NULL)
-					{
-						if (!strcmp(cptr, "\n"))
-							break;
-						printf("%s ", cptr);
-						if (rem % 3 == 0)
-							printf("\n");
-						cptr = strtok(NULL, " ");
-						rem++;
-					}
-				}
-				else
-					Fputs(buf, stdout);
+				// Rio_readlineb(&rio, buf, MAXLINE);
+				Rio_readnb(&rio, buf, MAXLINE);
+				Fputs(buf, stdout);
 
 				usleep(1000000);
 			}
@@ -131,7 +113,6 @@ int main(int argc, char **argv)
 
 	Close(clientfd); //line:netp:echoclient:close
 	exit(0);*/
-	end = clock() - start;
-	printf("elapsed time : %f ms\n", (double)end / CLOCKS_PER_SEC);
+
 	return 0;
 }
