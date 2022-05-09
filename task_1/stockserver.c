@@ -222,7 +222,7 @@ void command(char *BUF2, char *buf, char *argv[], char *clientBuf)
             if (amount > target->left_stock)
             {
                 //재고보다 구매량이 많은 경우
-                sprintf(clientBuf, "Not enough left stock\n");
+                sprintf(clientBuf, "Not enough left stocks\n");
             }
             else
             {
