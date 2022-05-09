@@ -23,34 +23,11 @@ int main(int argc, char **argv)
 
     while (Fgets(buf, MAXLINE, stdin) != NULL)
     {
-        int flag = 0;
         if (!strcmp(buf, "exit\n"))
             break;
-        else if (!strcmp(buf, "show\n"))
-            flag = 1;
-
         Rio_writen(clientfd, buf, strlen(buf));
-        Rio_readlineb(&rio, buf, MAXLINE);
-        if (flag == 1)
-        {
-            // fprintf(stdout, "%s", buf);
-            char *cptr = strtok(buf, " ");
-            int rem = 1;
-            while (cptr != NULL)
-            {
-                if (!strcmp(cptr, "\n"))
-                    break;
-                printf("%s ", cptr);
-                if (rem % 3 == 0)
-                    printf("\n");
-                cptr = strtok(NULL, " ");
-                rem++;
-            }
-        }
-        else
-        {
-            Fputs(buf, stdout);
-        }
+        Rio_readnb(&rio, buf, MAXLINE);
+        Fputs(buf, stdout);
     }
     Close(clientfd); // line:netp:echoclient:close
     exit(0);

@@ -153,7 +153,7 @@ int check_clients(pool *p)
                 // fprintf(stdout, "%s", clientBuf);
                 // clientBuf[strlen(clientBuf) - 1] = 0;
                 // fprintf(stdout, "%s", clientBuf);
-                Rio_writen(connfd, clientBuf, strlen(clientBuf)); // line:conc:echoservers:endecho
+                Rio_writen(connfd, clientBuf, MAXLINE); // line:conc:echoservers:endecho
                 // Rio_writen(connfd, buf, n);                       // line:conc:echoservers:endecho
                 //  Rio_writen 공부하기
                 /* EOF detected, remove descriptor from pool */
@@ -193,7 +193,6 @@ void command(char *BUF2, char *buf, char *argv[], char *clientBuf)
         }
 
         show_binary_tree(tree_head, clientBuf);
-        strcat(clientBuf + (strlen(clientBuf) - 1), "\n"); // 마지막에
     }
     else if (!strcmp(argv[0], "buy"))
     {
