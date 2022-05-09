@@ -227,7 +227,7 @@ void command(char *BUF2, char *buf, char *argv[], char *clientBuf)
             else
             {
                 target->left_stock -= amount;
-                sprintf(clientBuf, "[buy] " ANSI_COLOR_GREEN "sucess" ANSI_COLOR_RESET "\n");
+                sprintf(clientBuf, "[buy] " ANSI_COLOR_GREEN "success" ANSI_COLOR_RESET "\n");
             }
             // fprintf(stdout, "before sem_post!\n");
             sem_post(&target->write);
@@ -257,8 +257,8 @@ void command(char *BUF2, char *buf, char *argv[], char *clientBuf)
         {
             sem_wait(&target->write);
 
-            target->left_stock += amount;                                                  // 고객이 파는 상황이므로 주식의 개수를 늘린다.
-            sprintf(clientBuf, "[sell] " ANSI_COLOR_GREEN "sucess" ANSI_COLOR_RESET "\n"); //성공 출력메시지
+            target->left_stock += amount;                                                   // 고객이 파는 상황이므로 주식의 개수를 늘린다.
+            sprintf(clientBuf, "[sell] " ANSI_COLOR_GREEN "success" ANSI_COLOR_RESET "\n"); //성공 출력메시지
 
             sem_post(&target->write);
         }
