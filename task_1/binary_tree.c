@@ -21,8 +21,8 @@ STOCK_NODE *binary_tree_build(int start, int end)
     pnew->price = temp_array[mid].price;           // 가격
     pnew->readcnt = 0;                             // reader 는 0명
 
-    sem_init(&pnew->mutex, 0, 1); // 세마포어 1로 초기화(자신이 들어가고 lock이 걸려야 하므로 0 이면 signal 의 개념이다)
-    sem_init(&pnew->write, 0, 1); // 세마포어 1로 초기화(자신이 들어가고 lock이 걸려야 하므로 0 이면 signal 의 개념이다)
+    // sem_init(&pnew->mutex, 0, 1); // 세마포어 1로 초기화(자신이 들어가고 lock이 걸려야 하므로 0 이면 signal 의 개념이다)
+    // sem_init(&pnew->write, 0, 1); // 세마포어 1로 초기화(자신이 들어가고 lock이 걸려야 하므로 0 이면 signal 의 개념이다)
 
     pnew->left = binary_tree_build(start, mid - 1); // 왼쪽
     pnew->right = binary_tree_build(mid + 1, end);  // 오른쪽
@@ -73,11 +73,11 @@ void show_binary_tree(STOCK_NODE *cur, char *clientBuf)
     // wait 하고 post
     if (!cur) // 없으면 return
         return;
-    sem_wait(&cur->mutex);
-    (cur->readcnt)++;
-    if (cur->readcnt == 1)
-        sem_wait(&cur->write);
-    sem_post(&cur->mutex);
+    // sem_wait(&cur->mutex);
+    //(cur->readcnt)++;
+    // if (cur->readcnt == 1)
+    //     sem_wait(&cur->write);
+    // sem_post(&cur->mutex);
 
     show_binary_tree(cur->left, clientBuf);
     // sprintf(clientBuf, "show binary tree: ");
@@ -87,10 +87,10 @@ void show_binary_tree(STOCK_NODE *cur, char *clientBuf)
 
     //접근 금지
 
-    sem_wait(&cur->mutex);
-    (cur->readcnt)--;
-    if (cur->readcnt == 0)
-        sem_post(&cur->write);
+    // sem_wait(&cur->mutex);
+    //(cur->readcnt)--;
+    // if (cur->readcnt == 0)
+    //     sem_post(&cur->write);
 
-    sem_post(&cur->mutex);
+    // sem_post(&cur->mutex);
 }

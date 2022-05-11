@@ -216,8 +216,8 @@ void command(char *BUF2, char *buf, char *argv[], char *clientBuf)
         }
         else
         {
-            sem_wait(&target->write);
-            // fprintf(stdout, "before sem_wait!\n");
+            // sem_wait(&target->write);
+            //  fprintf(stdout, "before sem_wait!\n");
 
             if (amount > target->left_stock)
             {
@@ -230,7 +230,7 @@ void command(char *BUF2, char *buf, char *argv[], char *clientBuf)
                 sprintf(clientBuf, "[buy] " ANSI_COLOR_GREEN "success" ANSI_COLOR_RESET "\n");
             }
             // fprintf(stdout, "before sem_post!\n");
-            sem_post(&target->write);
+            // sem_post(&target->write);
         }
     }
     else if (!strcmp(argv[0], "sell"))
@@ -255,12 +255,12 @@ void command(char *BUF2, char *buf, char *argv[], char *clientBuf)
         }
         else
         {
-            sem_wait(&target->write);
+            // sem_wait(&target->write);
 
             target->left_stock += amount;                                                   // 고객이 파는 상황이므로 주식의 개수를 늘린다.
             sprintf(clientBuf, "[sell] " ANSI_COLOR_GREEN "success" ANSI_COLOR_RESET "\n"); //성공 출력메시지
 
-            sem_post(&target->write);
+            // sem_post(&target->write);
         }
     }
     else
