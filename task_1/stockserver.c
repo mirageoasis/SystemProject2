@@ -77,8 +77,7 @@ int main(int argc, char **argv)
         }
         /* Echo a text line from each ready connected descriptor */
         check_clients(&pool); // line:conc:echoservers:checkclients
-        // fprintf(stdout, "line 74!\n");
-        save_binary_tree(tree_head); // 파일에 트리를 밀어넣는다
+        // save_binary_tree(tree_head); // 파일에 트리를 밀어넣는다
     }
 
     exit(0);
@@ -148,21 +147,18 @@ int check_clients(pool *p)
             p->nready--;
             if ((n = Rio_readlineb(&rio, buf, MAXLINE)) != 0)
             {
-
+                // fprintf(stdout, "%s", buf);
                 command(BUF2, buf, argv, clientBuf);
                 // fprintf(stdout, "%s", clientBuf);
-                // clientBuf[strlen(clientBuf) - 1] = 0;
-                // fprintf(stdout, "%s", clientBuf);
                 Rio_writen(connfd, clientBuf, MAXLINE); // line:conc:echoservers:endecho
-                // Rio_writen(connfd, buf, n);                       // line:conc:echoservers:endecho
-                //  Rio_writen 공부하기
-                /* EOF detected, remove descriptor from pool */
             }
-            else
+            else /* EOF detected, remove descriptor from pool */
             {
+                save_binary_tree(tree_head);  // save file on exit!
                 Close(connfd);                // line:conc:echoservers:closeconnfd
                 FD_CLR(connfd, &p->read_set); // line:conc:echoservers:beginremove
                 p->clientfd[i] = -1;          // line:conc:echoservers:endremove
+                // fprintf(stdout, "connection ended! event based server\n");
             }
         }
     }
