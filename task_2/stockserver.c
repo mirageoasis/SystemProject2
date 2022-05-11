@@ -5,24 +5,11 @@
 
 #include "stockserver.h"
 
-typedef struct
-{ /* Represents a pool of connected descriptors */ // line:conc:echoservers:beginpool
-    int maxfd;                                     /* Largest descriptor in read_set */
-    fd_set read_set;                               /* Set of all active descriptors */
-    fd_set ready_set;                              /* Subset of descriptors ready for reading  */
-    int nready;                                    /* Number of ready descriptors from select */
-    int maxi;                                      /* Highwater index into client array */
-    int clientfd[FD_SETSIZE];                      /* Set of active descriptors */
-    rio_t clientrio[FD_SETSIZE];                   /* Set of active read buffers */
-} pool;                                            // line:conc:echoservers:endpool
-
 int lines = 0; /*파일 라인 수(주식의 개수)*/
 int loop = 1;  /*루프 지속할지 말지 결정하는 변수*/
-sem_t readMutex;
+sem_t filemutex;
 
 void echo(int connfd);
-void add_client(int connfd, pool *p);
-int check_clients(pool *p);
 void command(char *BUF2, char *buf, char *argv[], char *clientBuf);
 void sigint_handler();
 void *thread(void *vargp);
@@ -34,7 +21,7 @@ int main(int argc, char **argv)
     struct sockaddr_storage clientaddr; /* Enough space for any address */ // line:netp:echoserveri:sockaddrstorage
     sigset_t signal_pool;
     pthread_t tid;
-    // char client_hostname[MAXLINE], client_port[MAXLINE];
+    sem_init(&filemutex, 0, 1);
     // int status = 0; // 주식 현재 상태
 
     if (argc != 2)
@@ -205,7 +192,9 @@ void *thread(void *vargp)
         command(BUF2, buf, argv, clientBuf);
         Rio_writen(connfd, clientBuf, MAXLINE);
     }
+    sem_wait(&filemutex);
     save_binary_tree(tree_head);
+    sem_post(&filemutex);
     Close(connfd);
     return NULL;
 }
