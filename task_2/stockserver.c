@@ -139,7 +139,7 @@ void command(char *BUF2, char *buf, char *argv[], char *clientBuf)
             {
                 target->left_stock -= amount;
                 sprintf(clientBuf, "[buy] " ANSI_COLOR_GREEN "success" ANSI_COLOR_RESET "\n");
-                fprintf(stdout, "changed! %d %d -> %d %d\n", target->ID, target->left_stock + amount, target->ID, target->left_stock);
+                // fprintf(stdout, "changed! %d %d -> %d %d\n", target->ID, target->left_stock + amount, target->ID, target->left_stock);
             }
 
             sem_post(&target->write);
@@ -171,7 +171,7 @@ void command(char *BUF2, char *buf, char *argv[], char *clientBuf)
 
             target->left_stock += amount;                                                   // 고객이 파는 상황이므로 주식의 개수를 늘린다.
             sprintf(clientBuf, "[sell] " ANSI_COLOR_GREEN "success" ANSI_COLOR_RESET "\n"); //성공 출력메시지
-            fprintf(stdout, "changed! %d %d -> %d %d\n", target->ID, target->left_stock - amount, target->ID, target->left_stock);
+            // fprintf(stdout, "changed! %d %d -> %d %d\n", target->ID, target->left_stock - amount, target->ID, target->left_stock);
 
             sem_post(&target->write);
         }
@@ -210,7 +210,7 @@ void echo_cnt(int connfd)
         // printf("server received %d bytes\n", n);
         command(BUF2, buf, argv, clientBuf);
         Rio_writen(connfd, clientBuf, MAXLINE);
-        fprintf(stdout, "command: %s", buf);
+        // fprintf(stdout, "command: %s", buf);
     }
 }
 
